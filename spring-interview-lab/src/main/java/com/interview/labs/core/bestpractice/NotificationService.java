@@ -1,4 +1,4 @@
-package com.interview.labs.circularDependency.bestpractice;
+package com.interview.labs.bestpractice;
 
 import org.springframework.stereotype.Service;
 
