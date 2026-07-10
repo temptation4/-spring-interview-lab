@@ -1,4 +1,4 @@
-package com.interview.lab.circularDependency.setter;
+package com.interview.labs.circularDependency.setter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
