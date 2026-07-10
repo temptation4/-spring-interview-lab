@@ -2,7 +2,7 @@
 
 ---
 
-# 1. Spring Framework
+#  Spring Framework
 
 ## Definition
 
@@ -26,7 +26,7 @@ With Spring:
 
 ---
 
-# 2. Spring Architecture
+#  Spring Architecture
 
 ```
 Spring Framework
