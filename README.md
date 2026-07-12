@@ -22,7 +22,7 @@ With Spring:
 * Spring creates and manages objects (Beans)
 * Dependencies are injected automatically
 * Loose coupling
-* Better maintainability and testability
+* Better maintainability and testability 
 
 ---
 
