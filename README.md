@@ -26,7 +26,7 @@ With Spring:
 
 ---
 
-#  Spring Architecture
+#  Spring Architecture 
 
 ```
 Spring Framework
