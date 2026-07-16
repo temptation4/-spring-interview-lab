@@ -1,11 +1,14 @@
 package com.interview.labs.jpa.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
 @Table(name = "employee")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Employee {
 
     @Id
@@ -22,4 +25,6 @@ public class Employee {
     @Version
     private Integer version;
 
+    @OneToOne(mappedBy = "employee")
+    private Locker locker;
 }

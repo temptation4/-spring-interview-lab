@@ -1,7 +1,10 @@
 package com.interview.labs.jpa.controller;
 
 import com.interview.labs.jpa.dto.EmployeeDto;
+import com.interview.labs.jpa.dto.LockerRequestDto;
+import com.interview.labs.jpa.dto.LockerResponse;
 import com.interview.labs.jpa.entity.Employee;
+import com.interview.labs.jpa.entity.Locker;
 import com.interview.labs.jpa.repository.projection.EmployeeView;
 import com.interview.labs.jpa.service.EmployeeService;
 import org.springframework.data.domain.Page;
@@ -116,6 +119,20 @@ public class EmployeeController {
                 column,
                 value);
 
+    }
+
+    @PostMapping("/locker")
+    public LockerResponse assignLocker(
+            @RequestBody LockerRequestDto dto) {
+
+        Locker locker = service.assignLocker(dto);
+
+        return new LockerResponse(
+                locker.getId(),
+                locker.getLockerNumber(),
+                locker.getEmployee().getId(),
+                locker.getEmployee().getName()
+        );
     }
 
 
