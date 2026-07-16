@@ -1,9 +1,12 @@
 package com.interview.labs.jpa.service;
 
 import com.interview.labs.jpa.dto.EmployeeDto;
+import com.interview.labs.jpa.dto.LockerRequestDto;
 import com.interview.labs.jpa.entity.Employee;
+import com.interview.labs.jpa.entity.Locker;
 import com.interview.labs.jpa.entity.QEmployee;
 import com.interview.labs.jpa.repository.EmployeeRepository;
+import com.interview.labs.jpa.repository.LockerRepository;
 import com.interview.labs.jpa.repository.projection.EmployeeView;
 import com.interview.labs.jpa.specification.EmployeeSpecification;
 import com.querydsl.core.BooleanBuilder;
@@ -22,6 +25,8 @@ public class EmployeeService {
 
     private final EmployeeRepository repository;
 
+    private final LockerRepository lockerRepository;
+
     private final EntityManager entityManager;
 
     private static final Set<String> ALLOWED_COLUMNS =
@@ -32,8 +37,9 @@ public class EmployeeService {
                     "city"
             );
 
-    public EmployeeService(EmployeeRepository repository, EntityManager entityManager) {
+    public EmployeeService(EmployeeRepository repository, LockerRepository lockerRepository, EntityManager entityManager) {
         this.repository = repository;
+        this.lockerRepository = lockerRepository;
         this.entityManager = entityManager;
     }
 
@@ -177,5 +183,29 @@ public class EmployeeService {
         }
 
         return query.getResultList();
+    }
+
+    @Transactional
+    public Locker assignLocker(LockerRequestDto dto) {
+
+        Employee employee = repository.findById(dto.getEmployeeId())
+                .orElseThrow(() ->
+                        new RuntimeException("Employee Not Found"));
+
+        Locker locker = lockerRepository.findById(dto.getLockerId())
+                .orElse(null);
+
+        if (locker == null) {
+
+            locker = new Locker();
+            locker.setId(dto.getLockerId());
+        }
+
+        locker.setLockerNumber(dto.getLockerNumber());
+
+        // Owning Side
+        locker.setEmployee(employee);
+
+        return lockerRepository.save(locker);
     }
 }
