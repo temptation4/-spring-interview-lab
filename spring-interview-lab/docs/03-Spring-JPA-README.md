@@ -1,1565 +1,1331 @@
 # 📘 Spring Data JPA Interview Notes
 
-A concise interview handbook covering **Spring Data JPA**, **Hibernate**, and **JPA** concepts with architecture diagrams, internal working, and interview-focused explanations.
-
-> **Note:** These notes focus on concepts only. The implementation code is available in a separate Spring Boot Lab repository.
-
----
-
-# 📚 Table of Contents
-
-1. What is JPA?
-2. What is Hibernate?
-3. What is Spring Data JPA?
-4. Entity
-5. Repository
-6. EntityManager
-7. Persistence Context
-8. Dirty Checking
-9. Flush
-10. Derived Query
-11. JPQL
-12. Native Query
-13. Pagination
-14. Slice
-15. Sorting
-16. Projection
-17. Specification
-18. QueryDSL
-19. Dynamic SQL (EntityManager)
-20. Which Approach Should We Use?
+<p align="center">
+  <b>JPA · Hibernate · Spring Data JPA — Concepts, Relationships & Transactions</b>
+</p>
 
 ---
 
-# 1. What is JPA?
+## 📑 Table of Contents
 
-## Definition
+1. [JPA](#1-what-is-jpa)
+2. [Hibernate](#2-what-is-hibernate)
+3. [Spring Data JPA](#3-what-is-spring-data-jpa)
+4. [Entity](#4-entity)
+5. [Repository](#5-repository)
+6. [EntityManager](#6-entitymanager)
+7. [Persistence Context](#7-persistence-context)
+8. [Dirty Checking](#8-dirty-checking)
+9. [Flush](#9-flush)
+10. [Derived Query](#10-derived-query)
+11. [JPQL](#11-jpql)
+12. [Native Query](#12-native-query)
+13. [Pagination](#13-pagination)
+14. [Slice](#14-slice)
+15. [Sorting](#15-sorting)
+16. [Projection](#16-projection)
+17. [Specification](#17-specification)
+18. [QueryDSL](#18-querydsl)
+19. [Dynamic SQL (EntityManager)](#19-dynamic-sql-entitymanager)
+20. [Which Approach Should We Use?](#20-which-approach-should-we-use)
+21. [JPA Relationships](#21-jpa-relationships)
+22. [Owning Side](#22-owning-side)
+23. [Inverse Side (mappedBy)](#23-inverse-side-mappedby)
+24. [@JoinColumn](#24-joincolumn)
+25. [FetchType](#25-fetchtype)
+26. [Hibernate Proxy](#26-hibernate-proxy)
+27. [LazyInitializationException](#27-lazyinitializationexception)
+28. [N+1 Query Problem](#28-n1-query-problem)
+29. [JOIN FETCH](#29-join-fetch)
+30. [EntityGraph](#30-entitygraph)
+31. [Cascade](#31-cascade)
+32. [orphanRemoval](#32-orphanremoval)
+33. [Optimistic Locking](#33-optimistic-locking)
+34. [Transactions](#transaction)
+35. [ACID Properties](#25-acid-properties)
+36. [Transaction Propagation](#26-transaction-propagation)
+37. [Transaction Isolation](#30-transaction-isolation)
+38. [Rollback Rules](#35-rollback-rules)
 
-JPA (**Java Persistence API**) is a Java specification that defines a standard way to map Java objects to relational database tables.
+---
 
-JPA is **not a framework** and **does not provide an implementation**.
+## 1. What is JPA?
+
+**Definition**
+JPA (Java Persistence API) is a Java specification that defines how Java objects should be mapped to relational database tables.
+
+> JPA is **not** a framework and contains **no implementation**. It's a contract.
 
 It defines:
-
 - ORM Rules
 - Annotations
-- Interfaces (EntityManager)
+- Interfaces (`EntityManager`)
 
-Think of **JPA as a contract**.
+**Why JPA?**
 
----
+| Without JPA | With JPA |
+|---|---|
+| Manual SQL | Automatic Mapping |
+| Manual ResultSet Mapping | Automatic SQL Generation |
+| More Boilerplate Code | Less Code |
+| — | Better Maintainability |
 
-## Why JPA?
-
-### Without JPA
-
-- Manual SQL
-- Manual ResultSet Mapping
-- Boilerplate JDBC Code
-- Manual Transaction Management
-
-### With JPA
-
-- Automatic Object Mapping
-- Automatic SQL Generation
-- Less Boilerplate Code
-- Better Maintainability
-- Database Independence
-
----
-
-## Architecture
+**Architecture**
 
 ```text
 Application
       │
 Spring Data JPA
       │
-JPA Specification
+     JPA
       │
-Hibernate
+ Hibernate
       │
-JDBC
+   JDBC
       │
-Database
+ Database
 ```
 
 ---
 
-## Advantages
+## 2. What is Hibernate?
 
-- Standard API
-- Database Independent
-- Supports ORM
-- Reduces Boilerplate Code
-- Easy Integration with Spring Boot
+**Definition**
+Hibernate is the most popular implementation of JPA. It converts Java objects into SQL and SQL results back into Java objects.
 
----
-
-# 2. What is Hibernate?
-
-## Definition
-
-Hibernate is the most popular implementation of the JPA specification.
-
-It converts Java Objects into SQL and converts SQL results back into Java Objects.
-
-Hibernate performs all ORM-related operations.
-
----
-
-## Responsibilities
-
+**Responsibilities**
 - SQL Generation
-- Object Relational Mapping (ORM)
+- ORM
 - Persistence Context
 - Dirty Checking
 - Caching
 - Lazy Loading
-- Transaction Management
-- Query Execution
-
----
-
-## Hibernate Flow
-
-```text
-Java Object
-      │
-Hibernate
-      │
-Generated SQL
-      │
-JDBC
-      │
-Database
-```
-
----
-
-## Advantages
-
-- Automatic SQL Generation
-- Database Independent
-- First Level Cache
-- Lazy Loading
 - Transaction Support
-- Performance Optimization
 
----
-
-# 3. What is Spring Data JPA?
-
-## Definition
-
-Spring Data JPA is a Spring module built on top of JPA.
-
-It reduces boilerplate code by providing Repository interfaces for common database operations.
-
----
-
-## Internal Working
+**Flow**
 
 ```text
-Client
-      │
-Controller
-      │
-Service
-      │
-Repository
-      │
-EntityManager
-      │
-Hibernate
-      │
-JDBC
-      │
-Database
+Java Object → Hibernate → SQL → Database
 ```
 
 ---
 
-## Advantages
+## 3. What is Spring Data JPA?
 
-- No DAO Implementation
-- Built-in CRUD Methods
-- Pagination Support
-- Sorting Support
-- Dynamic Queries
-- Transaction Integration
+**Definition**
+Spring Data JPA is a Spring module built on top of JPA. It removes boilerplate code by providing Repository interfaces.
 
----
-
-# 4. Entity
-
-## Definition
-
-An Entity is a Java class mapped to a database table.
-
-Each object of the entity represents **one row** in the database.
-
----
-
-## Entity Mapping
+**Internal Working**
 
 ```text
-Employee Object
-        │
-        ▼
-employee Table
+Controller → Service → Repository → EntityManager → Hibernate → Database
 ```
 
----
-
-## Entity Lifecycle
-
-```text
-Transient
-      │
-persist()
-      ▼
-Managed
-      │
-detach()
-      ▼
-Detached
-      │
-remove()
-      ▼
-Removed
-```
-
----
-
-## Entity States
-
-### Transient
-
-- Object exists only in memory.
-- Not managed by Hibernate.
-- Not stored in the database.
-
-### Managed
-
-- Stored inside the Persistence Context.
-- Hibernate tracks all changes.
-
-### Detached
-
-- No longer managed by Hibernate.
-- Changes are not synchronized automatically.
-
-### Removed
-
-- Marked for deletion.
-- Deleted from the database during transaction commit.
-
----
-
-# 5. Repository
-
-## Definition
-
-Repository is the Data Access Layer.
-
-It communicates with the database through Hibernate and provides CRUD operations.
-
----
-
-## Repository Hierarchy
-
-```text
-Repository
-      ▲
-CrudRepository
-      ▲
-PagingAndSortingRepository
-      ▲
-JpaRepository
-```
-
----
-
-## Common Features
-
-- Save
-- Update
-- Delete
-- Find
+**Advantages**
+- No DAO implementation
+- CRUD methods
 - Pagination
 - Sorting
-- Batch Operations
+- Dynamic Queries
 
 ---
 
-## Advantages
+## 4. Entity
 
-- Less Boilerplate Code
-- Easy CRUD Operations
-- Easy Pagination
-- Easy Sorting
-- Better Maintainability
+**Definition**
+An Entity is a Java class mapped to a database table. Each object represents one row in the table.
+
+```text
+Employee Object  ──▶  employee Table
+```
+
+**Example**
+
+```java
+@Entity
+@Table(name = "employees")
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String email;
+}
+```
+
+**Entity Lifecycle**
+
+```text
+Transient ──persist()──▶ Managed ──detach()──▶ Detached ──remove()──▶ Removed
+```
 
 ---
-# 6. EntityManager
 
-## Definition
+## 5. Repository
 
-EntityManager is the core JPA interface responsible for managing the lifecycle of entities.
+**Definition**
+Repository is the data access layer. It communicates with the database through Hibernate.
 
-It acts as a bridge between the application and Hibernate.
+**Repository Hierarchy**
+
+```text
+JpaRepository ▲ PagingAndSortingRepository ▲ CrudRepository ▲ Repository
+```
+
+**Common Features**
+- Save / Update / Delete / Find
+- Pagination
+- Sorting
+
+**Example**
+
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+    // save(), findById(), findAll(), deleteById() come for free
+}
+```
+
+```java
+@Service
+public class EmployeeService {
+
+    private final EmployeeRepository employeeRepository;
+
+    public EmployeeService(EmployeeRepository employeeRepository) {
+        this.employeeRepository = employeeRepository;
+    }
+
+    public Employee create(Employee employee) {
+        return employeeRepository.save(employee);
+    }
+}
+```
 
 ---
 
-## Responsibilities
+## 6. EntityManager
 
-- Persist Entity
-- Find Entity
-- Merge Entity
-- Remove Entity
-- Flush Changes
+**Definition**
+EntityManager is the main JPA interface. It manages the lifecycle of entities and communicates with Hibernate.
+
+**Responsibilities**
+- Persist, Find, Merge, Remove, Flush
 - Execute JPQL
 - Execute Native SQL
-- Manage Persistence Context
 
----
-
-## Internal Working
+**Internal Flow**
 
 ```text
-Repository
-      │
-EntityManager
-      │
-Persistence Context
-      │
-Hibernate
-      │
-JDBC
-      │
-Database
+Repository → EntityManager → Persistence Context → Hibernate → Database
+```
+
+**Example**
+
+```java
+@Repository
+public class EmployeeDao {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public Employee find(Long id) {
+        return entityManager.find(Employee.class, id);
+    }
+
+    @Transactional
+    public void save(Employee employee) {
+        entityManager.persist(employee);
+    }
+
+    @Transactional
+    public Employee update(Employee employee) {
+        return entityManager.merge(employee);
+    }
+
+    @Transactional
+    public void delete(Employee employee) {
+        entityManager.remove(employee);
+    }
+}
 ```
 
 ---
 
-## Advantages
+## 7. Persistence Context
 
-- Manages Entity Lifecycle
-- Maintains Persistence Context
-- Executes JPQL and Native SQL
-- Handles Transactions
-- Performs Dirty Checking
+**Definition**
+Persistence Context is a memory area managed by EntityManager that stores Managed Entities. Also called the **First Level Cache**.
 
----
+**Why?** Avoid repeated database calls.
 
-# 7. Persistence Context
-
-## Definition
-
-Persistence Context is a memory area managed by the EntityManager.
-
-It stores all **Managed Entities** during a transaction.
-
-It is also known as the **First Level Cache**.
-
----
-
-## Why do we need Persistence Context?
-
-Without Persistence Context
-
-- Every `findById()` executes SQL.
-- Same object may be loaded multiple times.
-- More database calls.
-
-With Persistence Context
-
-- Entity is loaded only once.
-- Subsequent requests return the cached object.
-- Improves application performance.
-
----
-
-## Internal Working
+**Internal Working**
 
 ```text
-findById()
-      │
-Persistence Context
-      │
-Entity Found?
- YES        NO
- │          │
- ▼          ▼
-Return    Database
-Object       │
-             ▼
-      Store in Cache
-             │
-             ▼
-       Return Object
+findById() → Persistence Context → Entity Found?
+                                      ├── YES → Return Object
+                                      └── NO  → Database
 ```
 
----
-
-## Benefits
-
-- First Level Cache
-- Less SQL Execution
+**Benefits**
+- Less SQL
 - Better Performance
 - Same Object Returned
-- Supports Dirty Checking
+- Dirty Checking
 
----
+**Example**
 
-# 8. Dirty Checking
+```java
+@Transactional
+public void demo(Long id) {
+    Employee e1 = entityManager.find(Employee.class, id); // hits DB
+    Employee e2 = entityManager.find(Employee.class, id); // returned from Persistence Context
 
-## Definition
-
-Dirty Checking is a Hibernate feature that automatically detects changes made to **Managed Entities**.
-
-When the transaction commits, Hibernate compares the current entity with its original snapshot.
-
-If changes are found, Hibernate generates an **UPDATE** statement automatically.
-
----
-
-## Why Dirty Checking?
-
-Without Dirty Checking
-
-- Every update requires an explicit save operation.
-
-With Dirty Checking
-
-- Simply modify the managed entity.
-- Hibernate updates the database automatically.
-
----
-
-## Internal Working
-
-```text
-Load Entity
-      │
-Create Snapshot
-      │
-Modify Entity
-      │
-Transaction Commit
-      │
-Compare Snapshot
-      │
-Generate UPDATE SQL
-      │
-Database
+    System.out.println(e1 == e2); // true — same managed instance
+}
 ```
 
 ---
 
-## Benefits
+## 8. Dirty Checking
 
-- Automatic Updates
-- Less Boilerplate Code
-- Better Performance
-- Easy Transaction Management
+**Definition**
+Hibernate automatically detects changes made to Managed Entities. At commit time it compares the current object with its snapshot — if changes exist, it generates `UPDATE` SQL automatically.
 
----
-
-# 9. Flush
-
-## Definition
-
-Flush synchronizes the Persistence Context with the database.
-
-It sends SQL statements to the database but **does not commit** the transaction.
-
----
-
-## Internal Working
+**Flow**
 
 ```text
-Persistence Context
-      │
-flush()
-      │
-SQL Generated
-      │
-Database
+Load Entity → Snapshot → Modify Object → Commit → Compare Snapshot → UPDATE SQL
+```
+
+**Why?** No need to call `save()` for managed entities.
+
+**Example**
+
+```java
+@Transactional
+public void updateEmail(Long id, String newEmail) {
+    Employee employee = entityManager.find(Employee.class, id); // managed
+    employee.setEmail(newEmail); // no explicit save() needed
+    // UPDATE is issued automatically at commit time
+}
 ```
 
 ---
 
-## Flush vs Commit
+## 9. Flush
+
+**Definition**
+Flush synchronizes the Persistence Context with the database. It sends SQL but does **not** commit the transaction.
+
+```text
+Persistence Context → flush() → SQL → Database
+```
+
+**Flush vs Commit**
 
 | Flush | Commit |
-|--------|---------|
-| Sends SQL | Makes Changes Permanent |
-| Transaction Still Active | Transaction Ends |
-| Can Rollback | Cannot Rollback After Commit |
+|---|---|
+| Sends SQL | Makes Permanent |
+| Transaction Active | Transaction Ends |
 
----
+**Example**
 
-## Why Flush?
+```java
+@Transactional
+public void demo() {
+    Employee employee = entityManager.find(Employee.class, 1L);
+    employee.setEmail("new@mail.com");
 
-Flush ensures that the database stays synchronized with the Persistence Context before committing the transaction.
-
----
-
-# Spring Data JPA Internal Flow
-
-```text
-Client
-      │
-Controller
-      │
-Service
-      │
-Repository
-      │
-EntityManager
-      │
-Persistence Context
-      │
-Hibernate
-      │
-JDBC
-      │
-Database
-      │
-Response
+    entityManager.flush(); // SQL sent now, transaction still open
+    // ... more work in the same transaction
+}
 ```
 
 ---
 
-## Interview Tips
+## 10. Derived Query
 
-### What is EntityManager?
-
-The core JPA interface responsible for managing entity lifecycle and interacting with the Persistence Context.
-
----
-
-### What is Persistence Context?
-
-A memory area managed by EntityManager that stores managed entities and acts as the First Level Cache.
-
----
-
-### What is Dirty Checking?
-
-Hibernate automatically detects changes made to managed entities and updates the database during transaction commit.
-
----
-
-### What is Flush?
-
-Flush synchronizes the Persistence Context with the database by executing SQL statements without committing the transaction.
-
----
-
-## Quick Revision
+**Definition**
+Spring creates queries automatically from repository method names.
 
 ```text
-EntityManager
-      │
-Persistence Context
-      │
-Managed Entity
-      │
-Dirty Checking
-      │
-Flush
-      │
-Hibernate
-      │
-Database
+Method Name → Spring Parser → JPQL → Hibernate → SQL
 ```
 
----
-# 10. Derived Query
+**Best Use:** Simple queries.
+**Limitation:** Method names become too long.
 
-## Definition
+**Example**
 
-Derived Query Methods are queries automatically generated by Spring Data JPA based on the repository method name.
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
-Spring analyzes the method name and creates the appropriate JPQL query internally.
+    Optional<Employee> findByEmail(String email);
 
----
+    List<Employee> findByNameAndEmail(String name, String email);
 
-## Why Derived Query?
+    List<Employee> findByNameContainingIgnoreCase(String keyword);
 
-Without Derived Query
-
-- Write JPQL
-- Write SQL
-- Implement Repository Logic
-
-With Derived Query
-
-- Only define the repository method
-- Spring generates the query automatically
-
----
-
-## Internal Working
-
-```text
-Repository Method
-      │
-Spring Parser
-      │
-Generate JPQL
-      │
-Hibernate
-      │
-Generate SQL
-      │
-JDBC
-      │
-Database
+    boolean existsByEmail(String email);
+}
 ```
 
 ---
 
-## Advantages
+## 11. JPQL
 
-- No SQL Required
-- Easy to Read
-- Less Boilerplate Code
-- Faster Development
-
----
-
-## Limitations
-
-As the number of conditions increases, repository method names become very long and difficult to maintain.
-
----
-
-## Best Use
-
-- Simple Search
-- Single Column Search
-- Small Number of Conditions
-
----
-
-# 11. JPQL
-
-## Definition
-
-JPQL (Java Persistence Query Language) is an object-oriented query language provided by JPA.
-
-JPQL works with:
-
-- Entity Names
-- Entity Fields
-
-JPQL does **not** use:
-
-- Database Tables
-- Database Columns
-
-Hibernate converts JPQL into SQL before executing it.
-
----
-
-## Why JPQL?
-
-Derived Query Methods are suitable for simple queries.
-
-For complex business logic, JPQL provides better readability and flexibility.
-
----
-
-## Internal Working
+**Definition**
+JPQL is an object-oriented query language. It works with **Entity Names / Fields**, not table names or columns.
 
 ```text
-JPQL
-      │
-EntityManager
-      │
-Hibernate Parser
-      │
-Generate SQL
-      │
-JDBC
-      │
-Database
+JPQL → Hibernate → SQL → Database
 ```
 
----
-
-## Advantages
-
+**Advantages**
 - Database Independent
-- Supports Joins
-- Supports DTO Projection
 - Easy to Maintain
-- Uses Entity Model
+- Supports DTO Projection
 
----
+**Example**
 
-## Limitations
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
-- Cannot use database-specific features.
-- Vendor-specific functions may require Native Query.
+    @Query("SELECT e FROM Employee e WHERE e.name = :name")
+    List<Employee> searchByName(@Param("name") String name);
 
----
-
-## Best Use
-
-- Complex Search
-- Multiple Conditions
-- Joins
-- Business Reports
-
----
-
-# 12. Native Query
-
-## Definition
-
-Native Query executes database-specific SQL directly.
-
-Unlike JPQL, Hibernate does not convert the query.
-
-The SQL is sent directly to the database.
-
----
-
-## Internal Working
-
-```text
-Native SQL
-      │
-EntityManager
-      │
-Hibernate
-      │
-JDBC
-      │
-Database
+    @Query("SELECT e.email FROM Employee e WHERE e.id = :id")
+    String findEmailById(@Param("id") Long id);
+}
 ```
 
 ---
 
-## Advantages
+## 12. Native Query
 
-- Full SQL Support
-- Database-specific Features
-- Window Functions
-- Stored Procedures
-- CTE Support
-
----
-
-## Limitations
-
-- Database Dependent
-- Less Portable
-- Harder to Maintain
-
----
-
-## Best Use
-
-- Stored Procedures
-- Complex SQL
-- Performance Tuning
-- Vendor-specific Queries
-
----
-
-# JPQL vs Native Query
-
-| JPQL | Native Query |
-|------|--------------|
-| Entity Name | Table Name |
-| Entity Field | Database Column |
-| Database Independent | Database Specific |
-| Hibernate Converts to SQL | Executes SQL Directly |
-| Easy to Maintain | More Powerful |
-
----
-
-# 13. Pagination
-
-## Definition
-
-Pagination divides a large dataset into smaller pages.
-
-Instead of loading all records, only the required page is retrieved.
-
----
-
-## Why Pagination?
-
-Without Pagination
-
-- Loads all records
-- High Memory Usage
-- Slow Response
-- Poor Performance
-
-With Pagination
-
-- Loads only required records
-- Faster Response
-- Better User Experience
-
----
-
-## Internal Working
+**Definition**
+Native Query uses actual database SQL — Hibernate executes it directly.
 
 ```text
-Client
-      │
-Page Number
-      │
-Page Size
-      │
-Repository
-      │
-LIMIT
-      │
-Database
+Native SQL → EntityManager → Database
+```
+
+**Best Use:** Stored Procedures, CTEs, Window Functions, Vendor-specific SQL.
+
+**Example**
+
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
+    @Query(value = "SELECT * FROM employees WHERE email = :email", nativeQuery = true)
+    Employee findByEmailNative(@Param("email") String email);
+}
 ```
 
 ---
 
-## Page
+## 13. Pagination
 
-Page returns:
-
-- Records
-- Total Pages
-- Total Records
-- Current Page
-- hasNext()
-- hasPrevious()
-
----
-
-## SQL Generated
+**Definition**
+Pagination divides a large result into smaller pages.
 
 ```text
-Query 1
-LIMIT
+Client → Page Number → LIMIT → Database
+```
 
-+
+**Page returns:** Records, Total Pages, Total Records
+**Needs:** Two Queries — `LIMIT` + `COUNT`
 
-Query 2
-COUNT
+**Example**
+
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+    Page<Employee> findByName(String name, Pageable pageable);
+}
+```
+
+```java
+Pageable pageable = PageRequest.of(0, 10); // page 0, size 10
+Page<Employee> page = employeeRepository.findByName("Neelu", pageable);
+
+page.getContent();       // records in this page
+page.getTotalPages();
+page.getTotalElements();
 ```
 
 ---
 
-## Advantages
+## 14. Slice
 
-- Total Pages Available
-- Total Records Available
-- Suitable for Reports
-- Suitable for Admin Screens
+**Definition**
+Slice returns only the current page + `hasNext()`.
 
----
+**Internal Working:** Fetches `Page Size + 1` records.
+**Why Faster?** No `COUNT` query.
 
-# 14. Slice
-
-## Definition
-
-Slice returns only:
-
-- Current Page
-- hasNext()
-
-It does **not** calculate the total number of pages.
-
----
-
-## Internal Working
-
-Instead of executing COUNT,
-
-Spring fetches
-
-```text
-Page Size + 1
-```
-
-records.
-
-If one extra record exists,
-
-```text
-hasNext = true
-```
-
-Otherwise,
-
-```text
-hasNext = false
-```
-
----
-
-## Internal Flow
-
-```text
-Client
-      │
-Page Request
-      │
-LIMIT (Page Size + 1)
-      │
-Database
-      │
-Check Extra Record
-      │
-hasNext()
-```
-
----
-
-## Advantages
-
-- Faster than Page
-- No COUNT Query
-- Better Performance
-- Ideal for Large Datasets
-
----
-
-# Page vs Slice
+**Page vs Slice**
 
 | Page | Slice |
-|------|--------|
-| LIMIT + COUNT | LIMIT Only |
+|---|---|
+| Two Queries | One Query |
 | Total Pages | No Total Pages |
-| Total Records | No Total Records |
 | Slower | Faster |
-| Reports | Infinite Scroll |
 
----
+**Example**
 
-# 15. Sorting
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+    Slice<Employee> findByName(String name, Pageable pageable);
+}
+```
 
-## Definition
-
-Sorting arranges records in ascending or descending order.
-
-Sorting always uses **Entity Fields**, not database column names.
-
----
-
-## Internal Working
-
-```text
-Sort
-      │
-JPQL
-      │
-Hibernate
-      │
-ORDER BY
-      │
-Database
+```java
+Slice<Employee> slice = employeeRepository.findByName("Neelu", PageRequest.of(0, 10));
+slice.getContent();
+slice.hasNext(); // no COUNT query executed
 ```
 
 ---
 
-## Sorting Types
+## 15. Sorting
 
-- Ascending
-- Descending
-- Multiple Columns
-
----
-
-## Advantages
-
-- Ordered Results
-- Easy Pagination
-- Better User Experience
-
----
-
-## Best Use
-
-- Employee List
-- Product List
-- Reports
-- Search Results
-
----
-
-# Query Flow Summary
+**Definition**
+Sorting arranges records in ascending or descending order, using **Entity Fields**, not database columns.
 
 ```text
-Simple Search
-      │
-Derived Query
+Sort → JPQL → SQL → ORDER BY
+```
 
-----------------------
+**Example**
 
-Complex Query
-      │
-JPQL
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+    List<Employee> findByName(String name, Sort sort);
+}
+```
 
-----------------------
-
-Database Specific SQL
-      │
-Native Query
-
-----------------------
-
-Large Dataset
-      │
-Pagination
-
-----------------------
-
-Infinite Scroll
-      │
-Slice
-
-----------------------
-
-Ordered Results
-      │
-Sorting
+```java
+List<Employee> employees = employeeRepository.findByName(
+        "Neelu", Sort.by(Sort.Direction.DESC, "id"));
 ```
 
 ---
 
-# Interview Tips
+## 16. Projection
 
-### What is a Derived Query?
+**Definition**
+Projection fetches only required fields instead of the entire entity.
 
-Spring automatically creates the query from the repository method name.
+**Why?** Better performance, less memory, less network traffic.
 
----
+**Types:** Interface Projection · DTO Projection
 
-### Why does JPQL use Entity Names?
-
-JPQL is object-oriented and works on Java entities rather than database tables.
-
----
-
-### When should we use Native Query?
-
-When database-specific SQL features are required.
-
----
-
-### Why is Slice faster than Page?
-
-Slice executes only one SQL query because it does not perform COUNT.
-
----
-
-### Why does Page execute two SQL queries?
-
-One query retrieves the records, and another COUNT query calculates the total number of records.
-
----
-
-### Does Sorting use table columns?
-
-No.
-
-Sorting always uses **Entity Field Names**.
-
----
-
-# Quick Revision
-
-```text
-Simple Query
-      │
-Derived Query
-
-Complex Query
-      │
-JPQL
-
-Database SQL
-      │
-Native Query
-
-Large Dataset
-      │
-Page
-
-Infinite Scroll
-      │
-Slice
-
-Sorting
-      │
-ORDER BY
-```
-
----
-# 16. Projection
-
-## Definition
-
-Projection is a technique used to fetch **only the required columns** from the database instead of loading the complete entity.
-
-Instead of retrieving all entity fields, Projection returns only the fields needed by the application.
-
----
-
-## Why Projection?
-
-Without Projection
-
-- Fetches all columns
-- Higher Memory Usage
-- More Network Traffic
-- Slower Queries
-
-With Projection
-
-- Fetches only required columns
-- Less Memory Usage
-- Faster Queries
-- Better Performance
-
----
-
-## Types of Projection
-
-```text
-Projection
-      │
-      ├── Interface Projection
-      └── DTO Projection
-```
-
----
-
-## Internal Working
-
-```text
-Repository
-      │
-Projection
-      │
-Hibernate
-      │
-SELECT Required Columns
-      │
-Database
-```
-
----
-
-## Entity vs Projection
+**Comparison**
 
 | Entity | Projection |
-|---------|------------|
-| Fetches All Columns | Fetches Required Columns |
-| Managed by Hibernate | Read Only |
+|---|---|
+| All Columns | Selected Columns |
+| Managed | Read-only |
 | More Memory | Less Memory |
-| Slower | Faster |
 
----
+**Example — Interface Projection**
 
-## Best Use
+```java
+public interface EmployeeNameOnly {
+    String getName();
+    String getEmail();
+}
+```
 
-- Dashboard
-- Reports
-- REST APIs
-- Read-only Operations
+```java
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+    List<EmployeeNameOnly> findByName(String name);
+}
+```
 
----
+**Example — DTO Projection**
 
-# 17. Specification
+```java
+public record EmployeeDto(String name, String email) {}
+```
 
-## Definition
-
-Specification is a Spring Data JPA feature used to build **dynamic queries** using the Criteria API.
-
-Each search condition is created separately and combined at runtime.
-
----
-
-## Why Specification?
-
-Suppose an Employee Search screen contains:
-
-- Name
-- Department
-- City
-- Salary
-
-Users may search using any combination of filters.
-
-Instead of creating many repository methods, Specification builds the query dynamically.
-
----
-
-## Internal Working
-
-```text
-Search Filters
-      │
-Specification
-      │
-Criteria API
-      │
-Predicate
-      │
-Hibernate
-      │
-SQL
-      │
-Database
+```java
+@Query("SELECT new com.example.s3demo.dto.EmployeeDto(e.name, e.email) FROM Employee e")
+List<EmployeeDto> findAllDtos();
 ```
 
 ---
 
-## Advantages
+## 17. Specification
 
-- Dynamic Queries
-- Reusable Conditions
-- Easy Combination of Filters
-- Spring Standard
-
----
-
-## Limitations
-
-- Criteria API syntax is verbose.
-- Less readable than QueryDSL.
-
----
-
-## Best Use
-
-- Employee Search
-- Product Search
-- Admin Filter Screen
-- Report Filters
-
----
-
-# 18. QueryDSL
-
-## Definition
-
-QueryDSL is a **type-safe query framework** for building dynamic queries.
-
-It generates **Q Classes** for every entity and provides compile-time checking.
-
----
-
-## Why QueryDSL?
-
-Instead of using String-based field names,
-
-QueryDSL provides strongly typed entity fields with IDE auto-completion.
-
----
-
-## Internal Working
+**Definition**
+Specification builds dynamic queries using the Criteria API. Conditions can be combined at runtime.
 
 ```text
-Entity
-      │
-QEntity
-      │
-BooleanBuilder
-      │
-Predicate
-      │
-Hibernate
-      │
-SQL
-      │
-Database
+Filters → Specification → Criteria API → SQL
+```
+
+**Best Use:** Optional search filters.
+**Limitation:** Criteria API is verbose.
+
+**Example**
+
+```java
+public interface EmployeeRepository
+        extends JpaRepository<Employee, Long>, JpaSpecificationExecutor<Employee> {
+}
+```
+
+```java
+public class EmployeeSpecifications {
+
+    public static Specification<Employee> hasName(String name) {
+        return (root, query, cb) ->
+                name == null ? null : cb.equal(root.get("name"), name);
+    }
+
+    public static Specification<Employee> hasEmail(String email) {
+        return (root, query, cb) ->
+                email == null ? null : cb.equal(root.get("email"), email);
+    }
+}
+```
+
+```java
+Specification<Employee> spec = Specification
+        .where(EmployeeSpecifications.hasName(name))
+        .and(EmployeeSpecifications.hasEmail(email));
+
+List<Employee> result = employeeRepository.findAll(spec);
 ```
 
 ---
 
-## Advantages
+## 18. QueryDSL
 
+**Definition**
+QueryDSL is a type-safe query framework. It generates `Q` classes for every entity.
+
+```text
+Entity → QEntity → BooleanBuilder → Hibernate → SQL
+```
+
+**Advantages**
 - Type Safe
-- Compile-time Validation
-- IDE Auto-completion
-- Easy to Read
-- Easy Maintenance
+- IDE Auto Completion
+- Readable & Easy to Maintain
 
----
+**Best Use:** Enterprise search APIs.
 
-## Limitations
+**Example**
 
-- Requires Annotation Processing
-- Additional Maven Dependency
-- Generates Q Classes
+```java
+QEmployee employee = QEmployee.employee; // generated Q-class
 
----
+BooleanBuilder builder = new BooleanBuilder();
+if (name != null) builder.and(employee.name.eq(name));
+if (email != null) builder.and(employee.email.eq(email));
 
-## Best Use
-
-- Enterprise Search APIs
-- Complex Dynamic Queries
-- Large Enterprise Applications
-
----
-
-# Specification vs QueryDSL
-
-| Specification | QueryDSL |
-|--------------|----------|
-| Criteria API | Type-safe API |
-| Uses String Field Names | Uses Generated Q Classes |
-| More Boilerplate | Cleaner Syntax |
-| Spring Standard | Additional Dependency |
-| Less Readable | More Readable |
-
----
-
-# 19. Dynamic SQL (EntityManager)
-
-## Definition
-
-EntityManager allows SQL queries to be built dynamically at runtime.
-
-This approach is useful when users select the column to search.
-
----
-
-## Example Scenario
-
-Search Screen
-
-```text
-Search By
-
-▼ Name
-
-▼ Department
-
-▼ City
-
-▼ Salary
-```
-
-Instead of creating multiple APIs,
-
-one API builds SQL dynamically.
-
----
-
-## Internal Working
-
-```text
-API Request
-      │
-Column Validation
-      │
-Build SQL
-      │
-EntityManager
-      │
-Hibernate
-      │
-Database
+List<Employee> result = new JPAQueryFactory(entityManager)
+        .selectFrom(employee)
+        .where(builder)
+        .fetch();
 ```
 
 ---
 
-## Important
+## 19. Dynamic SQL (EntityManager)
 
-Always validate dynamic column names before building SQL.
+**Definition**
+EntityManager allows SQL to be built dynamically at runtime — useful when the search column is chosen by the user.
 
-Only parameterize values.
+```text
+API (column=name, value=Neelu) → Validate Column → Build SQL → EntityManager → Database
+```
 
-Never concatenate untrusted user input into SQL.
+> ⚠️ **Important:** Always validate dynamic column names. Never concatenate user input directly into SQL.
 
----
+**Example**
 
-## Advantages
+```java
+private static final Set<String> ALLOWED_COLUMNS = Set.of("name", "email", "id");
 
-- Highly Flexible
-- Supports Dynamic Columns
-- Generic Search API
+public List<Employee> searchByColumn(String column, String value) {
+    if (!ALLOWED_COLUMNS.contains(column)) {
+        throw new IllegalArgumentException("Invalid column: " + column);
+    }
 
----
+    String jpql = "SELECT e FROM Employee e WHERE e." + column + " = :value";
 
-## Limitations
-
-- Manual SQL Construction
-- Harder to Maintain
-- Greater Risk if Column Names Are Not Validated
-
----
-
-## Best Use
-
-- Generic Search Screens
-- Dynamic Reporting
-- Admin Search Tools
+    return entityManager.createQuery(jpql, Employee.class)
+            .setParameter("value", value)
+            .getResultList();
+}
+```
 
 ---
 
-# 20. Which Approach Should We Use?
+## 20. Which Approach Should We Use?
 
 | Requirement | Recommended Approach |
-|--------------|----------------------|
-| CRUD Operations | JpaRepository |
+|---|---|
+| CRUD | `JpaRepository` |
 | Simple Search | Derived Query |
-| Complex Business Query | JPQL |
-| Database-specific SQL | Native Query |
-| Pagination | Page |
-| Infinite Scroll | Slice |
-| Sorting | Sort |
-| Fetch Few Columns | Projection |
-| Optional Search Filters | Specification |
-| Enterprise Dynamic Search | QueryDSL |
+| Complex Fixed Query | JPQL |
+| Database Specific SQL | Native Query |
+| Pagination | `Page` |
+| Infinite Scroll | `Slice` |
+| Sorting | `Sort` |
+| Few Columns | Projection |
+| Optional Filters | Specification |
+| Type-safe Dynamic Search | QueryDSL |
 | Dynamic Column Search | EntityManager |
 
 ---
 
-# Spring Data JPA Complete Flow
+## 🔄 Spring Data JPA Complete Flow
 
 ```text
-Client
-      │
-Controller
-      │
-Service
-      │
-Repository
-      │
-EntityManager
-      │
-Persistence Context
-      │
-Hibernate
-      │
-JDBC
-      │
-Database
-      │
-Response
+Client → Controller → Service → Repository → EntityManager
+       → Persistence Context → Hibernate → JDBC → Database → Response
+```
+
+## 🗂️ Spring Data JPA Cheat Sheet
+
+```text
+Simple Query        → Derived Query
+Complex Query        → JPQL
+Database SQL         → Native Query
+Pagination           → Page / Slice
+Sorting              → Sort
+Few Columns          → Projection
+Dynamic Filters      → Specification
+Type Safe Search     → QueryDSL
+Dynamic SQL          → EntityManager
 ```
 
 ---
 
-# Spring Data JPA Complete Cheat Sheet
+## 21. JPA Relationships
+
+**Definition**
+Relationships define how one entity is associated with another entity.
 
 ```text
-Need CRUD
-      │
-JpaRepository
+JPA Relationships
+├── OneToOne
+├── OneToMany
+├── ManyToOne
+└── ManyToMany
+```
 
-------------------------
+| Relationship | Example |
+|---|---|
+| **OneToOne** | Employee → Locker |
+| **OneToMany** | Department → Employees |
+| **ManyToOne** | Employee → Department |
+| **ManyToMany** | Student → Course |
 
-Need Simple Search
-      │
-Derived Query
+**Example — ManyToMany**
 
-------------------------
+```java
+@Entity
+public class Student {
+    @Id @GeneratedValue
+    private Long id;
 
-Need Complex Business Query
-      │
-JPQL
+    @ManyToMany
+    @JoinTable(
+        name = "student_course",
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id"))
+    private Set<Course> courses = new HashSet<>();
+}
+```
 
-------------------------
+```java
+@Entity
+public class Course {
+    @Id @GeneratedValue
+    private Long id;
 
-Need Database-specific SQL
-      │
-Native Query
-
-------------------------
-
-Need Pagination
-      │
-Page
-
-------------------------
-
-Need Infinite Scroll
-      │
-Slice
-
-------------------------
-
-Need Sorting
-      │
-Sort
-
-------------------------
-
-Need Few Columns
-      │
-Projection
-
-------------------------
-
-Need Optional Filters
-      │
-Specification
-
-------------------------
-
-Need Enterprise Search
-      │
-QueryDSL
-
-------------------------
-
-Need Dynamic Column Search
-      │
-EntityManager
+    @ManyToMany(mappedBy = "courses")
+    private Set<Student> students = new HashSet<>();
+}
 ```
 
 ---
 
-# Interview Revision Summary
+## 22. Owning Side
 
-| Topic | Key Point |
-|---------|-----------|
-| JPA | Specification for ORM |
-| Hibernate | JPA Implementation |
-| Spring Data JPA | Repository Abstraction |
-| Entity | Maps Java Object to Database Table |
-| EntityManager | Core JPA Interface |
-| Persistence Context | First Level Cache |
-| Dirty Checking | Automatic Update Detection |
-| Flush | Synchronizes Changes to Database |
-| Derived Query | Query Generated from Method Name |
-| JPQL | Entity-based Query Language |
-| Native Query | Database SQL |
-| Pagination | Divide Large Result Set |
-| Slice | Faster Pagination Without COUNT |
-| Sorting | ORDER BY Using Entity Fields |
-| Projection | Fetch Required Columns Only |
-| Specification | Dynamic Queries Using Criteria API |
-| QueryDSL | Type-safe Dynamic Queries |
-| EntityManager | Programmatic JPQL & Native SQL |
+**Definition**
+The Owning Side is the entity that contains the Foreign Key and controls the relationship.
+
+**Example:** `Locker` owns the relationship because it contains `employee_id`.
+
+```java
+@Entity
+public class Locker {
+    @Id @GeneratedValue
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "employee_id") // FK lives here — Locker is the owner
+    private Employee employee;
+}
+```
+
+> ⚠️ Only the owning side updates the Foreign Key.
 
 ---
 
-# Conclusion
+## 23. Inverse Side (mappedBy)
 
-Spring Data JPA simplifies database access by combining:
+**Definition**
+The Inverse Side is the non-owning side — it simply reflects the relationship already managed by the owning side. `Employee` does not contain a Foreign Key.
 
-- JPA Specification
-- Hibernate ORM
-- Spring Repository Abstraction
+**Without `mappedBy`**
 
-Understanding the internal architecture, persistence context, query generation, and dynamic query techniques is essential for building scalable and maintainable enterprise applications.
+Hibernate thinks both `Employee` and `Locker` own the relationship → results in **two relationships** (extra join table or duplicate FK mapping).
 
-This handbook is designed for quick interview revision and focuses on concepts, architecture, flow diagrams, and best practices rather than implementation details.
+**With `mappedBy`**
+
+`Employee` holds a reference only; `Locker` owns the relationship → only **one** Foreign Key is maintained.
+
+```java
+@Entity
+public class Employee {
+    @Id @GeneratedValue
+    private Long id;
+
+    @OneToOne(mappedBy = "employee") // no FK here — just a reference
+    private Locker locker;
+}
+```
 
 ---
 
-⭐ **If these notes helped you, consider starring the repository!**
+## 24. @JoinColumn
+
+**Definition**
+`@JoinColumn` specifies the Foreign Key column.
+
+**Example:** `Locker.employee_id` → references `Employee`. Hibernate creates `employee_id` inside the `locker` table.
+
+```java
+@ManyToOne
+@JoinColumn(name = "department_id") // FK column name in the `employees` table
+private Department department;
+```
+
+---
+
+## 25. FetchType
+
+**Definition**
+FetchType decides when Hibernate loads associated entities.
+
+| Type | Description | Advantages | Disadvantages |
+|---|---|---|---|
+| **LAZY** | Loads related data only when accessed | Better performance, less memory | — |
+| **EAGER** | Loads related data immediately | Simple, no `LazyInitializationException` | More SQL, more memory |
+
+**Default Fetch Types**
+
+| Relationship | Default |
+|---|---|
+| OneToOne | EAGER |
+| ManyToOne | EAGER |
+| OneToMany | LAZY |
+| ManyToMany | LAZY |
+
+**Example**
+
+```java
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "department_id")
+private Department department;
+
+@OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
+private List<Employee> employees = new ArrayList<>();
+```
+
+---
+
+## 26. Hibernate Proxy
+
+**Definition**
+Hibernate creates a Proxy Object for LAZY associations. The proxy contains only the Primary Key, a session reference, and the logic to load the entity. Actual data loads only when accessed.
+
+---
+
+## 27. LazyInitializationException
+
+**Definition**
+Occurs when a LAZY entity is accessed after the Hibernate Session is closed.
+
+```text
+Session Open → Proxy → Session Closed → Access Proxy → LazyInitializationException
+```
+
+**Example**
+
+```java
+public Department getDepartment(Long id) {
+    return departmentRepository.findById(id).orElseThrow(); // session closes when method returns
+}
+
+// later, outside a transaction/session:
+department.getEmployees().size(); // throws LazyInitializationException
+```
+
+---
+
+## 28. N+1 Query Problem
+
+**Definition**
+Hibernate executes 1 query for parent entities + N additional queries for child entities → **1 + N Queries**. Performance issue.
+
+**Solution:** `JOIN FETCH`, `EntityGraph`, DTO Projection.
+
+**Example — the problem**
+
+```java
+List<Department> departments = departmentRepository.findAll(); // 1 query
+
+for (Department d : departments) {
+    d.getEmployees().size(); // N additional queries — one per department
+}
+```
+
+---
+
+## 29. JOIN FETCH
+
+**Definition**
+Loads parent and child entities using a single SQL query.
+
+**Benefits:** Eliminates N+1, better performance.
+
+**Example**
+
+```java
+public interface DepartmentRepository extends JpaRepository<Department, Long> {
+
+    @Query("SELECT d FROM Department d JOIN FETCH d.employees")
+    List<Department> findAllWithEmployees(); // single SQL query
+}
+```
+
+---
+
+## 30. EntityGraph
+
+**Definition**
+Overrides FetchType for a specific repository method.
+
+**Benefits:** Cleaner than `JOIN FETCH`, query-specific fetch plan.
+
+**Example**
+
+```java
+public interface DepartmentRepository extends JpaRepository<Department, Long> {
+
+    @EntityGraph(attributePaths = "employees")
+    List<Department> findAll(); // overrides default LAZY fetch for this call
+}
+```
+
+---
+
+## 31. Cascade
+
+**Definition**
+Cascade propagates operations from Parent to Child.
+
+| Cascade | Description |
+|---|---|
+| `PERSIST` | Save Child |
+| `MERGE` | Update Child |
+| `REMOVE` | Delete Child |
+| `REFRESH` | Reload Child |
+| `DETACH` | Detach Child |
+| `ALL` | All Operations |
+
+**Example**
+
+```java
+@Entity
+public class Department {
+    @Id @GeneratedValue
+    private Long id;
+
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL)
+    private List<Employee> employees = new ArrayList<>();
+}
+```
+
+```java
+Department dept = new Department();
+Employee emp = new Employee();
+emp.setDepartment(dept);
+dept.getEmployees().add(emp);
+
+departmentRepository.save(dept); // emp is saved automatically via CascadeType.ALL
+```
+
+---
+
+## 32. orphanRemoval
+
+**Definition**
+Deletes a child when it is removed from the parent's relationship.
+
+**Example:** `Department → Employees` → remove Rahul from the collection → Rahul is deleted.
+
+**Difference**
+
+| `Cascade REMOVE` | `orphanRemoval` |
+|---|---|
+| Triggered when Parent is deleted | Triggered when child is removed from collection |
+| Deletes all children | Deletes only the removed child |
+
+**Example**
+
+```java
+@OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<Employee> employees = new ArrayList<>();
+```
+
+```java
+dept.getEmployees().remove(rahul); // Rahul is deleted from the DB on commit
+```
+
+---
+
+## 33. Optimistic Locking
+
+**Definition**
+Uses `@Version` to prevent Lost Update problems.
+
+```text
+Read → Version = 1 → Update → Version Check → Success OR OptimisticLockException
+```
+
+**Example**
+
+```java
+@Entity
+public class Employee {
+    @Id @GeneratedValue
+    private Long id;
+
+    @Version
+    private Long version;
+
+    private String email;
+}
+```
+
+```java
+try {
+    Employee employee = employeeRepository.findById(id).orElseThrow();
+    employee.setEmail("updated@mail.com");
+    employeeRepository.save(employee);
+} catch (OptimisticLockException ex) {
+    // another transaction updated this row first — retry or notify the user
+}
+```
+
+---
+
+## ⭐ Most Important JPA Interview Questions
+
+- What is the difference between `@JoinColumn` and `mappedBy`?
+- What is the Owning Side? What is the Inverse Side? Why do we use `mappedBy`?
+- Difference between LAZY and EAGER.
+- What is a Hibernate Proxy? Why does `LazyInitializationException` occur?
+- What is the N+1 Query Problem?
+- Difference between `JOIN FETCH` and `EntityGraph`.
+- What is Cascade? Difference between `CascadeType.REMOVE` and `orphanRemoval`.
+- Difference between `@OneToMany` and `@ManyToOne`.
+- Difference between `@OneToOne` and `@ManyToOne`.
+- What is Optimistic Locking?
+
+---
+
+# 💳 Transaction
+
+**Definition**
+A Transaction is a group of one or more database operations executed as a single unit of work — either **all** operations succeed, or **all** fail.
+
+**Without Transaction:** Debit succeeds → Credit fails → Database inconsistent.
+**With Transaction:**
+
+```text
+Begin → Debit → Credit → Success?
+                            ├── YES → Commit
+                            └── NO  → Rollback
+```
+
+---
+
+## @Transactional
+
+**Definition**
+`@Transactional` tells Spring to execute all database operations inside a single transaction. Spring automatically begins, executes, commits on success, and rolls back on failure.
+
+**Internal Flow**
+
+```text
+Controller → Service (@Transactional) → Spring Transaction Manager → Hibernate → Database
+```
+
+**Example**
+
+```java
+@Service
+public class EmployeeService {
+
+    private final EmployeeRepository employeeRepository;
+
+    @Transactional
+    public Employee updateEmail(Long id, String newEmail) {
+        Employee employee = employeeRepository.findById(id).orElseThrow();
+        employee.setEmail(newEmail); // UPDATE committed automatically
+        return employee;
+    }
+}
+```
+
+---
+
+## Commit
+
+**Definition**
+Commit permanently saves all changes made during the transaction.
+
+```text
+Transaction → Execute SQL → Commit → Permanent Changes
+```
+
+## Rollback
+
+**Definition**
+Rollback cancels all changes made during the current transaction.
+
+```text
+Transaction → Execute SQL → Exception → Rollback → Previous State Restored
+```
+
+---
+
+## ACID Properties
+
+| Property | Meaning |
+|---|---|
+| **Atomicity** | All operations succeed or all fail |
+| **Consistency** | Database always moves from one valid state to another |
+| **Isolation** | Concurrent transactions do not interfere with each other |
+| **Durability** | Committed data is permanently stored |
+
+---
+
+## Transaction Propagation
+
+**Definition**
+Propagation defines how a transactional method behaves when called by another transactional method.
+
+```text
+Propagation
+├── REQUIRED
+├── REQUIRES_NEW
+├── SUPPORTS
+├── MANDATORY
+├── NOT_SUPPORTED
+├── NEVER
+└── NESTED
+```
+
+| Propagation | Behavior | Best Use |
+|---|---|---|
+| `REQUIRED` (default) | Join existing transaction, else create new | Order Processing, Payment, Inventory |
+| `REQUIRES_NEW` | Always starts a new transaction; suspends any existing one | Audit Logging, Notifications, Payment History |
+| `SUPPORTS` | Join if present, else execute without a transaction | — |
+
+**Example**
+
+```java
+@Service
+public class OrderService {
+
+    private final AuditLogService auditLogService;
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void placeOrder(Order order) {
+        // ... save order, update inventory ...
+        auditLogService.log("Order placed: " + order.getId());
+    }
+}
+
+@Service
+public class AuditLogService {
+
+    // runs in its own transaction — commits even if placeOrder() later fails
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void log(String message) {
+        auditLogRepository.save(new AuditLog(message));
+    }
+}
+```
+
+---
+
+## Transaction Isolation
+
+**Definition**
+Isolation controls how concurrent transactions interact.
+
+**Concurrency Problems**
+
+| Problem | Description |
+|---|---|
+| **Dirty Read** | Reading uncommitted data from another transaction |
+| **Non-Repeatable Read** | Reading the same row twice, getting different values |
+| **Phantom Read** | Running the same query twice, getting different row counts |
+
+**Isolation Levels**
+
+| Isolation Level | Dirty Read | Non-Repeatable Read | Phantom Read |
+|---|---|---|---|
+| `READ_UNCOMMITTED` | ✅ | ✅ | ✅ |
+| `READ_COMMITTED` | ❌ | ✅ | ✅ |
+| `REPEATABLE_READ` | ❌ | ❌ | ✅ |
+| `SERIALIZABLE` | ❌ | ❌ | ❌ |
+
+**Example**
+
+```java
+@Transactional(isolation = Isolation.READ_COMMITTED)
+public BigDecimal getAccountBalance(Long accountId) {
+    return accountRepository.findById(accountId).orElseThrow().getBalance();
+}
+```
+
+**Default Isolation by Database**
+
+| Database | Default |
+|---|---|
+| MySQL (InnoDB) | `REPEATABLE_READ` |
+| Oracle | `READ_COMMITTED` |
+| PostgreSQL | `READ_COMMITTED` |
+
+---
+
+## Rollback Rules
+
+**Default Rule:** Spring automatically rolls back for `RuntimeException` and `Error`, but **not** for checked exceptions.
+
+```text
+Throwable
+├── Error
+└── Exception
+      ├── RuntimeException   → Rollback (e.g. NullPointerException, ArithmeticException)
+      └── Checked Exception  → Commit by default (e.g. IOException, SQLException)
+```
+
+**`rollbackFor`** — forces rollback even for checked exceptions.
+**`noRollbackFor`** — prevents rollback for specified exceptions.
+
+**Example**
+
+```java
+@Transactional(rollbackFor = IOException.class)
+public void saveWithFile(Employee employee) throws IOException {
+    employeeRepository.save(employee);
+    fileService.writeAuditFile(employee); // rolls back save() if this throws IOException
+}
+
+@Transactional(noRollbackFor = IllegalStateException.class)
+public void updateStatus(Employee employee) {
+    employeeRepository.save(employee);
+    if (employee.getStatus() == null) {
+        throw new IllegalStateException("Status missing"); // commit still happens
+    }
+}
+```
+
+---
+
+## 🧾 Spring Transaction Complete Flow
+
+```text
+Client → Controller → Service (@Transactional) → Spring Transaction Manager
+       → Hibernate → JDBC → Database → Commit / Rollback → Response
+```
+
+## Transaction Lifecycle
+
+```text
+Begin → Execute SQL → Success?
+                        ├── YES → Commit
+                        └── NO  → Rollback
+                                    → End
+```
+
+## 🗂️ Spring Transaction Cheat Sheet
+
+**ACID**
+
+```text
+Atomicity    → All or Nothing
+Consistency  → Valid Database State
+Isolation    → No Concurrent Conflicts
+Durability   → Permanent Data
+```
+
+**Propagation**
+
+```text
+REQUIRED      → Join Existing, Else Create
+REQUIRES_NEW  → Always New Transaction
+SUPPORTS      → Join If Present, Else Execute Normally
+```
+
+**Isolation**
+
+```text
+READ_UNCOMMITTED → Nothing Prevented
+READ_COMMITTED   → Prevents Dirty Read
+REPEATABLE_READ  → Prevents Dirty Read + Non-Repeatable Read
+SERIALIZABLE     → Prevents Everything
+```
+
+**Rollback Rules**
+
+```text
+Runtime Exception  → Rollback
+Checked Exception  → Commit
+rollbackFor         → Force Rollback
+noRollbackFor        → Force Commit
+```
+
+---
+
+## ⭐ Most Asked Transaction Interview Questions
+
+- What is a Transaction? What does `@Transactional` do?
+- Explain ACID properties.
+- Difference between Commit and Rollback.
+- Explain Transaction Propagation. Difference between `REQUIRED` and `REQUIRES_NEW`.
+- What is Transaction Isolation? Explain Dirty Read, Non-Repeatable Read, and Phantom Read.
+- Compare all Isolation Levels. Default isolation level in MySQL and Oracle.
+- When does Spring roll back a transaction?
+- Difference between Checked and Runtime Exceptions in transactions.
+- Explain `rollbackFor` and `noRollbackFor`.
+
+---
+
+<p align="center">📌 Revision notes — Spring Data JPA & Transactions</p>
