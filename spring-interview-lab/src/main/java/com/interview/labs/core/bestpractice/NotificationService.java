@@ -1,4 +1,4 @@
-package com.interview.labs.bestpractice;
+package com.interview.labs.core.bestpractice;
 
 import org.springframework.stereotype.Service;
 
