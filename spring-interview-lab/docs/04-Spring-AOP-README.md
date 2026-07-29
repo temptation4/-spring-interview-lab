@@ -2,6 +2,8 @@
 
 > Complete Revision Guide for Java & Spring Boot Interviews
 
+> Every concept below is backed by `LoggingAspect.java` (`com.interview.labs.aop`) in this same lab, applied to every method in `com.interview.labs.jpa.service.*` — run the app, hit an `/employee/...` endpoint, and watch the console.
+
 ## Table of Contents
 
 1.  What is AOP?
@@ -167,18 +169,34 @@ Result: - No Transaction - No Logging - No Cache - No Security
 
 Solution: - Move the transactional method to another Spring Bean.
 
+## Code — see it happen in this lab
+
+`LoggingAspect` advises every method in `com.interview.labs.jpa.service.*`. `EmployeeService.selfInvocationDemo` calls another method on itself:
+
+``` java
+public Employee selfInvocationDemo(Long id, Double salary) {
+    return this.updateSalaryWithFlush(id, salary); // this.-call — bypasses the AOP proxy
+}
+```
+
+Compare the console output of these two endpoints:
+
+- `PUT /employee/{id}/salary/flush?salary=90000` → prints `Before`/`After`/`Around` for `updateSalaryWithFlush`.
+- `PUT /employee/{id}/salary/self-invocation-demo?salary=90000` → prints `Before`/`After`/`Around` only for `selfInvocationDemo` — **never** for the inner `updateSalaryWithFlush` call, because it never goes through the proxy.
+
 ------------------------------------------------------------------------
 
 ## 7. Aspect
 
 A class containing cross-cutting concerns.
 
-Example:
+Example — `LoggingAspect.java` in this lab:
 
 ``` java
 @Aspect
 @Component
 public class LoggingAspect {
+    // advice methods below
 }
 ```
 
@@ -189,6 +207,32 @@ public class LoggingAspect {
 The action executed by an Aspect.
 
 Types: - @Before - @After - @Around - @AfterReturning - @AfterThrowing
+
+## Code — all five, from `LoggingAspect.java`
+
+``` java
+@Before("execution(* com.interview.labs.jpa.service.*.*(..))")
+public void before(JoinPoint joinPoint) {
+    System.out.println("Before Method : " + joinPoint.getSignature().getName());
+}
+
+@After("execution(* com.interview.labs.jpa.service.*.*(..))")
+public void after(JoinPoint joinPoint) {
+    System.out.println("After Method : " + joinPoint.getSignature().getName());
+}
+
+@AfterReturning(pointcut = "execution(* com.interview.labs.jpa.service.*.*(..))", returning = "result")
+public void afterReturning(JoinPoint joinPoint, Object result) {
+    System.out.println("After Returning : " + joinPoint.getSignature().getName() + " -> " + result);
+}
+
+@AfterThrowing(pointcut = "execution(* com.interview.labs.jpa.service.*.*(..))", throwing = "ex")
+public void afterThrowing(JoinPoint joinPoint, Exception ex) {
+    System.out.println("After Throwing : " + joinPoint.getSignature().getName() + " -> " + ex.getMessage());
+}
+```
+
+(`@Around` is covered separately below — it needs `ProceedingJoinPoint`, not `JoinPoint`.)
 
 ------------------------------------------------------------------------
 
@@ -260,14 +304,46 @@ Without `proceed()`, the target method never executes.
 Capabilities: - Execute before - Execute after - Skip execution - Modify
 arguments - Modify return value
 
+## Code — `LoggingAspect.java`
+
+``` java
+@Around("execution(* com.interview.labs.jpa.service.*.*(..))")
+public Object around(ProceedingJoinPoint pjp) throws Throwable {
+
+    long start = System.currentTimeMillis();
+
+    Object result = pjp.proceed(); // without this call, the target method never runs
+
+    long elapsed = System.currentTimeMillis() - start;
+
+    System.out.println("Around : " + pjp.getSignature().getName() + " took " + elapsed + "ms");
+
+    return result;
+}
+```
+
+**Endpoint:** any `/employee/...` call — check the console for the `Around : ... took Nms` line.
+
 ------------------------------------------------------------------------
 
-## 14. Common Spring Features Using AOP
+## 14. Why Around is Most Powerful
+
+Every other advice type can only observe the method call. `@Around` is the only one that **controls** it, because it receives a `ProceedingJoinPoint` instead of a plain `JoinPoint`:
+
+| Advice | Can do |
+|---|---|
+| `@Before` / `@After` | Run code before/after — cannot change arguments, return value, or skip the call |
+| `@AfterReturning` / `@AfterThrowing` | Inspect the result or exception — still cannot change control flow |
+| `@Around` | Everything above, **plus**: skip `proceed()` entirely, change the arguments passed to it, change the returned value, or catch/replace exceptions it throws |
+
+That's why `@Around` is what `@Transactional`, `@Cacheable`, and `@Async` are actually built on — each of them needs to wrap the call (begin transaction → `proceed()` → commit, or check cache → `proceed()` only on a miss), not just react to it.
+
+### Bonus: Common Spring Features Built on AOP
 
 -   @Transactional
 -   @Cacheable
 -   @Async
--   Logging
+-   Logging (this lab's `LoggingAspect`)
 
 ------------------------------------------------------------------------
 
