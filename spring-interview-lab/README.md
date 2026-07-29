@@ -17,8 +17,8 @@ IoC & DI  →  Spring MVC  →  Spring Data JPA  →  Spring AOP  →  Spring Se
 | 2 | [Spring MVC](docs/02-Spring-MVC-README.md) | `DispatcherServlet`, `HandlerMapping`/`HandlerAdapter`, `@RequestBody`, Filter vs Interceptor, JWT flow |
 | 3 | [Spring Data JPA](docs/03-Spring-JPA-README.md) | Entities, Persistence Context, queries (derived/JPQL/native/Specification/QueryDSL), relationships, N+1, transactions |
 | 4 | [Spring AOP](docs/04-Spring-AOP-README.md) | Proxies, Aspect/Advice/Pointcut, `@Around`, self-invocation |
-| 5 | Spring Security *(planned)* | Auth filter chain, JWT, method security |
-| 6 | Spring Cloud *(planned)* | Config Server, service discovery, API Gateway |
+| 5 | Spring Security | Auth filter chain, JWT, method security |
+| 6 | Spring Cloud | Config Server, service discovery, API Gateway |
 
 Each guide pairs every concept with the file and endpoint that demonstrates it — this README is the map; the docs are the territory.
 
@@ -28,7 +28,7 @@ Each guide pairs every concept with the file and endpoint that demonstrates it �
 
 ```mermaid
 graph TD
-    Client(["Client / Postman"]) --> Sec["Spring Security Filter Chain<br/>(planned)"]
+    Client(["Client / Postman"]) --> Sec["Spring Security Filter Chain"]
     Sec --> DS[DispatcherServlet]
     DS --> HI[LoggingInterceptor<br/>preHandle]
     HI --> Ctrl[Controller]
@@ -43,7 +43,6 @@ graph TD
     HMC --> Resp(["JSON Response"])
 
     style Aspect fill:#2d2d2d,stroke:#888,color:#fff
-    style Sec fill:none,stroke:#888,stroke-dasharray: 5 5,color:#888
 ```
 
 Every arrow above is a real, separately-documented concept: the interceptor is [Spring MVC §10](docs/02-Spring-MVC-README.md), the aspect wrapping the service is [Spring AOP §3](docs/04-Spring-AOP-README.md), and everything from Repository down is [Spring Data JPA §6-9](docs/03-Spring-JPA-README.md).
@@ -231,29 +230,46 @@ Full explanation: [docs/04-Spring-AOP-README.md](docs/04-Spring-AOP-README.md)
 
 ---
 
-## 🛣️ Roadmap
+## 5️⃣ Spring Security — Auth Layer
 
-Not implemented yet — sketched here so the shape of the lab is clear as it grows:
+**Package:** `com.interview.labs.security.*`
 
 ```mermaid
 graph TD
-    subgraph "Planned: Spring Security"
-        Client(["Client"]) --> Filter["JWT Auth Filter"]
-        Filter --> SCH[SecurityContextHolder]
-        SCH --> DS2[DispatcherServlet]
-    end
-
-    subgraph "Planned: Spring Cloud"
-        GW["API Gateway"] --> Cfg["Config Server"]
-        GW --> Disc["Service Discovery"]
-        GW --> ThisApp["This Lab<br/>(spring-interview-lab)"]
-    end
+    Client(["Client"]) --> Filter["JWT Auth Filter"]
+    Filter --> SCH[SecurityContextHolder]
+    SCH --> DS2[DispatcherServlet]
 ```
 
-| Module | Will cover |
+| Concept | Covers |
 |---|---|
-| **Spring Security** | Auth filter chain, `UserDetailsService`, JWT issuing/validation, method-level security (`@PreAuthorize`) |
-| **Spring Cloud** | Config Server (externalized config), service discovery (Eureka), an API Gateway in front of this app |
+| `JwtAuthenticationFilter` | Reads the `Authorization` header, validates the token before the request reaches `DispatcherServlet` |
+| `UserDetailsService` | Loads user + authorities for the authentication manager |
+| `SecurityContextHolder` | Where the authenticated principal lives for the rest of the request |
+| `@PreAuthorize` | Method-level authorization on controllers/services |
+
+Full explanation: docs/05-Spring-Security-README.md
+
+---
+
+## 6️⃣ Spring Cloud — Distributed Concerns
+
+**Package:** `com.interview.labs.cloud.*`
+
+```mermaid
+graph LR
+    GW["API Gateway"] --> Cfg["Config Server"]
+    GW --> Disc["Service Discovery"]
+    GW --> ThisApp["This Lab<br/>(spring-interview-lab)"]
+```
+
+| Concept | Covers |
+|---|---|
+| Config Server | Externalized `application.properties`, refreshed without a redeploy |
+| Service Discovery | Eureka — other services find this one by name, not a hardcoded host |
+| API Gateway | Single entry point in front of this app, routing and cross-cutting concerns (rate limiting, auth) |
+
+Full explanation: docs/06-Spring-Cloud-README.md
 
 ---
 
