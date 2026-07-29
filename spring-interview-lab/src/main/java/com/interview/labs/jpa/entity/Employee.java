@@ -1,7 +1,11 @@
 package com.interview.labs.jpa.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "employee")
@@ -18,7 +22,8 @@ public class Employee {
 
     private Double salary;
 
-    private String department;
+    @Column(name = "department")
+    private String departmentName;
 
     private String city;
 
@@ -26,5 +31,17 @@ public class Employee {
     private Integer version;
 
     @OneToOne(mappedBy = "employee")
+    @JsonIgnore // Locker.employee points back here — ignore to avoid Employee <-> Locker recursion
     private Locker locker;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @ManyToMany
+    @JoinTable(
+            name = "employee_project",
+            joinColumns = @JoinColumn(name = "employee_id"),
+            inverseJoinColumns = @JoinColumn(name = "project_id"))
+    private Set<Project> projects = new HashSet<>();
 }

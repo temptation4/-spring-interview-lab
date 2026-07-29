@@ -1,0 +1,7 @@
+package com.interview.labs.jpa.repository;
+
+import com.interview.labs.jpa.entity.AuditLog;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+}
