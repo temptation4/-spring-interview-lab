@@ -1,6 +1,14 @@
 # 🧪 Spring Interview Lab
 
-A runnable Spring Boot playground built to *see* interview concepts happen, not just read about them — every topic below is backed by real code in this repo and a real endpoint you can hit.
+Every arrow above is a real, separately-documented concept: the interceptor is [Spring MVC §10](docs/02-Spring-MVC-README.md), the aspect wrapping the service is [Spring AOP §3](docs/04-Spring-AOP-README.md), and everything from Repository down is [Spring Data JPA §6-9](docs/03-Spring-JPA-README.md).
+
+Same flow, animated — a teal pulse travels the request down to MySQL, pausing at `Service` while `LoggingAspect` wraps the call, then an amber pulse carries the response back:
+
+<p align="center">
+  <img src="docs/assets/request-flow-animated.svg" alt="Animated request/response flow through the lab, from Security to MySQL and back" width="100%">
+</p>
+
+A runnable Spring Boot playground built to *see*  concepts happen, not just read about them — every topic below is backed by real code in this repo and a real endpoint you can hit.
 
 ```
 IoC & DI  →  Spring MVC  →  Spring Data JPA  →  Spring AOP  →  Spring Security  →  Spring Cloud
@@ -44,14 +52,6 @@ graph TD
 
     style Aspect fill:#2d2d2d,stroke:#888,color:#fff
 ```
-
-Every arrow above is a real, separately-documented concept: the interceptor is [Spring MVC §10](docs/02-Spring-MVC-README.md), the aspect wrapping the service is [Spring AOP §3](docs/04-Spring-AOP-README.md), and everything from Repository down is [Spring Data JPA §6-9](docs/03-Spring-JPA-README.md).
-
-Same flow, animated — a teal pulse travels the request down to MySQL, pausing at `Service` while `LoggingAspect` wraps the call, then an amber pulse carries the response back:
-
-<p align="center">
-  <img src="docs/assets/request-flow-animated.svg" alt="Animated request/response flow through the lab, from Security to MySQL and back" width="100%">
-</p>
 
 ---
 
