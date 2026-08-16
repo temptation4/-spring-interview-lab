@@ -1,4 +1,4 @@
-# 📘 Spring Data JPA Interview Notes
+# 📘 Spring Data JPA 
 
 A concise interview handbook covering **Spring Data JPA**, **Hibernate**, and **JPA** concepts with architecture diagrams, internal working, and interview-focused explanations.
 
