@@ -1,4 +1,4 @@
-# 🧪 Spring Interview Lab
+# 🧪 SpringBoot Lab
 
 Every arrow above is a real, separately-documented concept: the interceptor is [Spring MVC §10](docs/02-Spring-MVC-README.md), the aspect wrapping the service is [Spring AOP §3](docs/04-Spring-AOP-README.md), and everything from Repository down is [Spring Data JPA §6-9](docs/03-Spring-JPA-README.md).
 
