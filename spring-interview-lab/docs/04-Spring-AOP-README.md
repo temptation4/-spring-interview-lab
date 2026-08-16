@@ -24,7 +24,7 @@
 16. Cheat Sheet
 17. Important Interview Questions
 
-> How `@Transactional` is implemented using this exact proxy mechanism is covered separately in [Spring Transaction Internals](../spring-internals/03-transaction-internals/README.md).
+> How `@Transactional` is implemented using this exact proxy mechanism is covered separately in [Spring Transaction Internals](05-Transaction-Internals-README.md).
 
 ------------------------------------------------------------------------
 
@@ -422,4 +422,4 @@ That's why `@Around` is what `@Transactional`, `@Cacheable`, and `@Async` are ac
 
 ## Where This Goes Next
 
-`@Transactional` is implemented using this exact proxy mechanism, applied to transactions specifically — see **[Spring Transaction Internals](../spring-internals/03-transaction-internals/README.md)** for the full trace: `BeanPostProcessor` → `ProxyFactory` → `TransactionInterceptor` → `PlatformTransactionManager` → `ThreadLocal`, plus a real teaching `BeanPostProcessor` and a hand-rolled `ThreadLocal` wired into `LoggingAspect`, both in `com.interview.labs.transaction`.
+`@Transactional` is implemented using this exact proxy mechanism, applied to transactions specifically — see **[Spring Transaction Internals](05-Transaction-Internals-README.md)** for the full trace: `BeanPostProcessor` → `ProxyFactory` → `TransactionInterceptor` → `PlatformTransactionManager` → `ThreadLocal`, plus a real teaching `BeanPostProcessor` and a hand-rolled `ThreadLocal` wired into `LoggingAspect`, both in `com.interview.labs.transaction`.

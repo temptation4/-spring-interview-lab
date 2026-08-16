@@ -1,5 +1,13 @@
 # 🧪 Spring Interview Lab
 
+Every arrow above is a real, separately-documented concept: the interceptor is [Spring MVC §10](docs/02-Spring-MVC-README.md), the aspect wrapping the service is [Spring AOP §3](docs/04-Spring-AOP-README.md), and everything from Repository down is [Spring Data JPA §6-9](docs/03-Spring-JPA-README.md).
+
+Same flow, animated — a teal pulse travels the request down to MySQL, pausing at `Service` while `LoggingAspect` wraps the call, then an amber pulse carries the response back:
+
+<p align="center">
+  <img src="docs/assets/request-flow-animated.svg" alt="Animated request/response flow through the lab, from Security to MySQL and back" width="100%">
+</p>
+
 A runnable Spring Boot playground built to *see*  concepts happen, not just read about them — every topic below is backed by real code in this repo and a real endpoint you can hit.
 
 ```
@@ -17,8 +25,8 @@ IoC & DI  →  Spring MVC  →  Spring Data JPA  →  Spring AOP  →  Spring Se
 | 2 | [Spring MVC](docs/02-Spring-MVC-README.md) | `DispatcherServlet`, `HandlerMapping`/`HandlerAdapter`, `@RequestBody`, Filter vs Interceptor, JWT flow |
 | 3 | [Spring Data JPA](docs/03-Spring-JPA-README.md) | Entities, Persistence Context, queries (derived/JPQL/native/Specification/QueryDSL), relationships, N+1, transactions |
 | 4 | [Spring AOP](docs/04-Spring-AOP-README.md) | Proxies, Aspect/Advice/Pointcut, `@Around`, self-invocation |
-| 5 | Spring Security | Auth filter chain, JWT, method security |
-| 6 | Spring Cloud | Config Server, service discovery, API Gateway |
+| 5 | [Spring Security](docs/06-Spring-Security-README.md) | Auth filter chain, JWT, `UserDetailsService`, method security (`@PreAuthorize`), 401 vs 403 |
+| 6 | [Spring Cloud](docs/07-Spring-Cloud-README.md) | Service discovery (Eureka), `@LoadBalanced`, Config Server, `@RefreshScope`, API Gateway |
 
 Each guide pairs every concept with the file and endpoint that demonstrates it — this README is the map; the docs are the territory.
 
@@ -28,7 +36,7 @@ Each guide pairs every concept with the file and endpoint that demonstrates it �
 
 ```mermaid
 graph TD
-    Client(["Client / Postman"]) --> Sec["Spring Security Filter Chain"]
+    Client(["Client / Postman"]) --> Sec["Spring Security Filter Chain<br/>(every request passes through;<br/>only /secure/** actually requires a token)"]
     Sec --> DS[DispatcherServlet]
     DS --> HI[LoggingInterceptor<br/>preHandle]
     HI --> Ctrl[Controller]
@@ -230,44 +238,74 @@ Full explanation: [docs/04-Spring-AOP-README.md](docs/04-Spring-AOP-README.md)
 
 ## 5️⃣ Spring Security — Auth Layer
 
-**Package:** `com.interview.labs.security.*`
+**Package:** `com.interview.labs.security.*` — everything from Sections 1-4 stays wide open; only `/auth/**` and `/secure/**` are actually gated, so the auth mechanics stay isolated and easy to read.
 
 ```mermaid
-graph TD
-    Client(["Client"]) --> Filter["JWT Auth Filter"]
-    Filter --> SCH[SecurityContextHolder]
-    SCH --> DS2[DispatcherServlet]
+sequenceDiagram
+    participant C as Client
+    participant AC as AuthController
+    participant AM as AuthenticationManager
+    participant JF as JwtAuthenticationFilter
+    participant SC as SecuredController
+
+    C->>AC: POST /auth/login {username, password}
+    AC->>AM: authenticate(...)
+    AM-->>AC: Authentication (or BadCredentialsException -> 401)
+    AC-->>C: signed JWT
+
+    C->>JF: GET /secure/user  Authorization: Bearer <token>
+    JF->>JF: validate signature + expiry
+    JF->>SC: SecurityContextHolder populated -> request proceeds
+    SC-->>C: 200 OK (or 403 if @PreAuthorize role check fails)
 ```
+
+| Endpoint | Demonstrates |
+|---|---|
+| `POST /auth/login` | `AuthenticationManager` → `DaoAuthenticationProvider` → `UserDetailsService` → `PasswordEncoder`; returns a signed JWT. Demo logins: `user`/`password` (ROLE_USER), `admin`/`admin123` (ROLE_USER + ROLE_ADMIN) |
+| `GET /secure/user` | URL-level rule (`authorizeHttpRequests`) — any authenticated token passes; no token → 401 |
+| `GET /secure/admin` | Method-level rule (`@PreAuthorize("hasRole('ADMIN')")`) — a valid `user` token still gets 403 here |
 
 | Concept | Covers |
 |---|---|
 | `JwtAuthenticationFilter` | Reads the `Authorization` header, validates the token before the request reaches `DispatcherServlet` |
-| `UserDetailsService` | Loads user + authorities for the authentication manager |
+| `DemoUserDetailsService` | In-memory `UserDetailsService` — loads user + authorities for the authentication manager |
 | `SecurityContextHolder` | Where the authenticated principal lives for the rest of the request |
-| `@PreAuthorize` | Method-level authorization on controllers/services |
+| `@PreAuthorize` + `@EnableMethodSecurity` | Method-level authorization, independent of the URL-level rule |
+| `AuthenticationEntryPoint` | Makes "no token" return 401 instead of Spring's default 403, so 401 vs 403 stays meaningful |
 
-Full explanation: docs/05-Spring-Security-README.md
+Full explanation: [docs/06-Spring-Security-README.md](docs/06-Spring-Security-README.md)
 
 ---
 
 ## 6️⃣ Spring Cloud — Distributed Concerns
 
-**Package:** `com.interview.labs.cloud.*`
+**Package:** `com.interview.labs.cloud.*` — the client-side half (discovery + config) is real, runnable code with zero extra infra required to boot; a Gateway is deliberately **not** included here (see the doc for why: it needs the reactive stack, which conflicts with this MVC app in the same module).
 
 ```mermaid
 graph LR
-    GW["API Gateway"] --> Cfg["Config Server"]
-    GW --> Disc["Service Discovery"]
-    GW --> ThisApp["This Lab<br/>(spring-interview-lab)"]
+    GW["API Gateway<br/>(separate service — not in this repo)"] -.-> Cfg["Config Server<br/>:8888"]
+    GW -.-> Disc["Eureka<br/>:8761"]
+    GW -.-> ThisApp["This Lab<br/>(spring-interview-lab)"]
+    ThisApp -->|registers on boot| Disc
+    ThisApp -->|optional config pull| Cfg
 ```
+
+| Endpoint | Demonstrates |
+|---|---|
+| `GET /cloud/services` | `DiscoveryClient.getServices()` — `[]` with no Eureka running, a real list once one is up |
+| `GET /cloud/instances/{name}` | Where a logical service name currently resolves to |
+| `GET /cloud/call/{name}/{path}` | A `@LoadBalanced RestTemplate` call by logical name, not a hardcoded host |
+| `GET /cloud/config` | Value from `GreetingProperties`, a `@RefreshScope` bean — sourced from Config Server if one's running, else the local default |
 
 | Concept | Covers |
 |---|---|
-| Config Server | Externalized `application.properties`, refreshed without a redeploy |
-| Service Discovery | Eureka — other services find this one by name, not a hardcoded host |
-| API Gateway | Single entry point in front of this app, routing and cross-cutting concerns (rate limiting, auth) |
+| Eureka client | This app registers itself on boot (`eureka.client.*` in `application.properties`); non-blocking if no server is up |
+| `@LoadBalanced RestTemplate` | Resolves a logical service name against the registry instead of DNS |
+| Config Server (client side) | `spring.config.import=optional:configserver:...` — `optional:` means a missing Config Server doesn't fail startup |
+| `@RefreshScope` | Re-reads `@Value` fields on `POST /actuator/refresh`, without a restart |
+| API Gateway | Single entry point in front of N services, routing + centralized cross-cutting concerns — conceptually covered, not shipped as code here |
 
-Full explanation: docs/06-Spring-Cloud-README.md
+Full explanation: [docs/07-Spring-Cloud-README.md](docs/07-Spring-Cloud-README.md)
 
 ---
 
@@ -280,6 +318,8 @@ Full explanation: docs/06-Spring-Cloud-README.md
 | Persistence | Spring Data JPA + Hibernate |
 | Database | MySQL |
 | Dynamic queries | QueryDSL 5.1.0 (`querydsl-jpa`, Jakarta classifier) |
+| Security | Spring Security + `jjwt` 0.11.5 (JWT) |
+| Cloud | Spring Cloud 2023.0.1 — Eureka client, Config client, Actuator |
 | Boilerplate | Lombok |
 | Build | Maven |
 
@@ -298,6 +338,19 @@ Full explanation: docs/06-Spring-Cloud-README.md
    ```
 
 > This project targets **Java 17** (`pom.xml` → `<java.version>`). If your default `java -version` reports something newer (e.g. 21+/25), Lombok's annotation processor may fail to compile — point `JAVA_HOME` at a JDK 17 install for `mvn` commands if that happens.
+
+You'll see warnings in the console about a Config Server (`:8888`) and Eureka (`:8761`) not being reachable — that's expected (see [Spring Cloud](docs/07-Spring-Cloud-README.md)) and doesn't stop the app from starting or serving every other endpoint normally.
+
+### Try the JWT login (Section 5)
+
+```bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+# -> {"token":"...", "tokenType":"Bearer"}
+
+curl http://localhost:8080/secure/admin -H "Authorization: Bearer <token>"
+```
 
 ---
 
@@ -325,8 +378,21 @@ src/main/java/com/interview/labs
 │   ├── controller/
 │   ├── dto/
 │   └── specification/
-└── aop/
-    └── LoggingAspect.java
+├── aop/
+│   └── LoggingAspect.java
+├── security/               # Auth layer (Section 5)
+│   ├── SecurityConfig.java
+│   ├── PasswordEncoderConfig.java
+│   ├── JwtService.java
+│   ├── JwtAuthenticationFilter.java
+│   ├── DemoUserDetailsService.java
+│   ├── AuthController.java
+│   ├── SecuredController.java
+│   └── dto/                # LoginRequest, LoginResponse
+└── cloud/                  # Distributed concerns (Section 6)
+    ├── CloudConfig.java     # @LoadBalanced RestTemplate
+    ├── DiscoveryController.java
+    └── GreetingProperties.java  # @RefreshScope demo
 ```
 
 ---

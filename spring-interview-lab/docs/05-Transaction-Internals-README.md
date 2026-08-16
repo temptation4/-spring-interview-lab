@@ -1,11 +1,11 @@
 # Spring Transaction Internals
 
-> How `@Transactional` (used throughout [Spring Data JPA §34-37](../../docs/03-Spring-JPA-README.md)) is actually implemented — the same AOP proxy mechanism from the [Spring AOP guide](../../docs/04-Spring-AOP-README.md), applied specifically to transactions.
+> How `@Transactional` (used throughout [Spring Data JPA §34-37](03-Spring-JPA-README.md)) is actually implemented — the same AOP proxy mechanism from the [Spring AOP guide](04-Spring-AOP-README.md), applied specifically to transactions.
 
 Real, runnable code for the parts of this that make sense to hand-write for teaching lives in `com.interview.labs.transaction`:
 
-- [`TransactionAwareBeanPostProcessor.java`](../../src/main/java/com/interview/labs/transaction/TransactionAwareBeanPostProcessor.java) — a real `BeanPostProcessor` that reflects over every bean at startup looking for `@Transactional`
-- [`TransactionContextHolder.java`](../../src/main/java/com/interview/labs/transaction/TransactionContextHolder.java) — a hand-rolled `ThreadLocal`, wired into `LoggingAspect`
+- [`TransactionAwareBeanPostProcessor.java`](../src/main/java/com/interview/labs/transaction/TransactionAwareBeanPostProcessor.java) — a real `BeanPostProcessor` that reflects over every bean at startup looking for `@Transactional`
+- [`TransactionContextHolder.java`](../src/main/java/com/interview/labs/transaction/TransactionContextHolder.java) — a hand-rolled `ThreadLocal`, wired into `LoggingAspect`
 
 `BeanPostProcessor`'s actual transaction-proxy creation, `TransactionInterceptor`, and `PlatformTransactionManager` are Spring Framework's own internals — not reimplemented here, just traced.
 
@@ -202,7 +202,7 @@ Spring does not perform reflection for every request.
 
 Instead it stores metadata.
 
-Example — the audit-log demo from the JPA guide ([§35](../../docs/03-Spring-JPA-README.md)):
+Example — the audit-log demo from the JPA guide ([§35](03-Spring-JPA-README.md)):
 
 ```java
 @Transactional(
@@ -249,7 +249,7 @@ Spring creates **one proxy per bean**.
 
 Not one proxy per method.
 
-> The same proxy created for `EmployeeService` here is the one `LoggingAspect` ([Spring AOP §3](../../docs/04-Spring-AOP-README.md#3-spring-proxy)) also advises — a bean gets exactly one proxy that all applicable aspects (transactions, logging, whatever else applies) share, not a separate proxy per concern.
+> The same proxy created for `EmployeeService` here is the one `LoggingAspect` ([Spring AOP §3](04-Spring-AOP-README.md#3-spring-proxy)) also advises — a bean gets exactly one proxy that all applicable aspects (transactions, logging, whatever else applies) share, not a separate proxy per concern.
 
 ---
 
@@ -287,7 +287,7 @@ Therefore:
 
 ## Code — see it happen in this lab
 
-This is the exact same failure mode as [Spring AOP §6 Self Invocation](../../docs/04-Spring-AOP-README.md#6-self-invocation), demonstrated with the transactional method itself:
+This is the exact same failure mode as [Spring AOP §6 Self Invocation](04-Spring-AOP-README.md#6-self-invocation), demonstrated with the transactional method itself:
 
 ```java
 public Employee selfInvocationDemo(Long id, Double salary) {
@@ -663,7 +663,7 @@ Both start "inside" an existing transaction, but differently:
 | Outer transaction's rollback has no effect on it | Rolling back the outer transaction also rolls back the nested savepoint |
 | Two separate database transactions | One database transaction with a rollback point |
 
-`AuditLogService.log(...)` in this lab uses `REQUIRES_NEW` specifically because the audit row must survive even if the outer transaction later rolls back — `NESTED` would roll the audit row back along with everything else, defeating the whole point of the demo in [Spring Data JPA §35](../../docs/03-Spring-JPA-README.md).
+`AuditLogService.log(...)` in this lab uses `REQUIRES_NEW` specifically because the audit row must survive even if the outer transaction later rolls back — `NESTED` would roll the audit row back along with everything else, defeating the whole point of the demo in [Spring Data JPA §35](03-Spring-JPA-README.md).
 
 ---
 
