@@ -4,10 +4,6 @@ Every arrow above is a real, separately-documented concept: the interceptor is [
 
 Same flow, animated — a teal pulse travels the request down to MySQL, pausing at `Service` while `LoggingAspect` wraps the call, then an amber pulse carries the response back:
 
-<p align="center">
-  <img src="docs/assets/request-flow-animated.svg" alt="Animated request/response flow through the lab, from Security to MySQL and back" width="100%">
-</p>
-
 A runnable Spring Boot playground built to *see*  concepts happen, not just read about them — every topic below is backed by real code in this repo and a real endpoint you can hit.
 
 ```
